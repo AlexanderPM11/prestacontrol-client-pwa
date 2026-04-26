@@ -9,12 +9,13 @@ const LoansPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'activos' | 'pagados' | 'anulados'>('activos');
-  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'cancel' | 'delete' | 'reactivate', loanId: number | null, title: string, message: string}>({
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'cancel' | 'delete' | 'reactivate', loanId: number | null, title: string, message: string, error?: string}>({
     isOpen: false,
     type: 'cancel',
     loanId: null,
     title: '',
-    message: ''
+    message: '',
+    error: undefined
   });
 
   const API_URL = import.meta.env.VITE_API_URL;
@@ -79,8 +80,10 @@ const LoansPage: React.FC = () => {
       }
       setModalConfig({ ...modalConfig, isOpen: false });
       fetchLoans();
-    } catch (err) {
-      alert('Error al procesar la solicitud.');
+    } catch (err: any) {
+      console.error('Error in confirmAction:', err);
+      const errorMsg = err.response?.data?.message || 'Error al procesar la solicitud.';
+      setModalConfig({ ...modalConfig, error: errorMsg });
     }
   };
 
@@ -334,6 +337,14 @@ const LoansPage: React.FC = () => {
             <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-8 leading-relaxed">
               {modalConfig.message}
             </p>
+
+            {modalConfig.error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl animate-shake">
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 text-center">
+                  {modalConfig.error}
+                </p>
+              </div>
+            )}
             <div className="flex gap-4">
               <button 
                 onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
