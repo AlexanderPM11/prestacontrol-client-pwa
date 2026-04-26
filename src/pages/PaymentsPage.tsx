@@ -7,7 +7,7 @@ const PaymentsPage: React.FC = () => {
   const [loans, setLoans] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [selectedLoan, setSelectedLoan] = useState<any>(null);
-  const [amount, setAmount] = useState<number>(0);
+  const [displayAmount, setDisplayAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -39,7 +39,13 @@ const PaymentsPage: React.FC = () => {
   };
 
   const handleProcessPayment = async () => {
-    if (!selectedLoan || amount <= 0) return;
+    const numAmount = parseFloat(displayAmount.replace(/,/g, ''));
+    if (!selectedLoan || numAmount <= 0) return;
+
+    if (numAmount > selectedLoan.balanceDue + 0.01) {
+      alert(`El monto (${numAmount.toLocaleString()}) no puede ser mayor al saldo pendiente (${selectedLoan.balanceDue.toLocaleString()})`);
+      return;
+    }
 
     setIsSubmitting(true);
     setSuccess(false);
@@ -47,7 +53,7 @@ const PaymentsPage: React.FC = () => {
     try {
       const response = await api.post(`/payments`, {
         loanId: selectedLoan.id,
-        amount: amount,
+        amount: numAmount,
         paymentMethod: 'Efectivo',
         notes: 'Pago recibido desde la PWA'
       });
@@ -56,7 +62,7 @@ const PaymentsPage: React.FC = () => {
       setSuccess(true);
       fetchPendingLoans();
       setSelectedLoan(null);
-      setAmount(0);
+      setDisplayAmount('');
     } catch (err) {
       console.error('Error processing payment:', err);
     } finally {
@@ -145,9 +151,18 @@ const PaymentsPage: React.FC = () => {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">$</span>
                     <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
+                      type="text"
+                      value={displayAmount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '');
+                        if (val === '') {
+                          setDisplayAmount('');
+                          return;
+                        }
+                        const parts = val.split('.');
+                        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        setDisplayAmount(parts.join('.'));
+                      }}
                       placeholder="0.00"
                       className="w-full pl-10 pr-4 py-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-3xl font-black text-slate-800 dark:text-white focus:border-emerald-500 outline-none transition-all"
                     />
@@ -156,12 +171,18 @@ const PaymentsPage: React.FC = () => {
                     {[100, 500, 1000].map(val => (
                       <button 
                         key={val}
-                        onClick={() => setAmount(val)}
+                        onClick={() => setDisplayAmount(val.toLocaleString())}
                         className="py-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-bold transition-all"
                       >
-                        +${val}
+                        +${val.toLocaleString()}
                       </button>
                     ))}
+                    <button 
+                      onClick={() => setDisplayAmount(selectedLoan.balanceDue.toLocaleString())}
+                      className="col-span-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-black transition-all uppercase tracking-widest"
+                    >
+                      Saldar Préstamo (${selectedLoan.balanceDue.toLocaleString()})
+                    </button>
                   </div>
                 </div>
 
@@ -174,7 +195,7 @@ const PaymentsPage: React.FC = () => {
 
                 <button
                   onClick={handleProcessPayment}
-                  disabled={isSubmitting || amount <= 0}
+                  disabled={isSubmitting || !displayAmount || parseFloat(displayAmount.replace(/,/g, '')) <= 0}
                   className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/30 transition-all transform active:scale-95 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

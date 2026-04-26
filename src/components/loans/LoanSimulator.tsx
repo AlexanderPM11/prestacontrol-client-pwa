@@ -36,10 +36,22 @@ const LoanSimulator: React.FC<LoanSimulatorProps> = ({ initialData, onSimulation
   }, [amount, interestRate, installments, frequency, startDate]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/,/g, '');
-    if (/^\d*$/.test(rawValue)) {
-      setAmount(rawValue ? Number(rawValue) : '');
+    const val = e.target.value.replace(/[^0-9.]/g, '');
+    if (val === '') {
+      setAmount('');
+      return;
     }
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setAmount(num);
+    }
+  };
+
+  const formatWithSeparators = (val: number | '') => {
+    if (val === '') return '';
+    const parts = val.toString().split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join('.');
   };
 
   const handleInterestChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,8 +124,9 @@ const LoanSimulator: React.FC<LoanSimulatorProps> = ({ initialData, onSimulation
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
               <input
                 type="text"
-                value={amount ? amount.toLocaleString('en-US') : ''}
+                value={formatWithSeparators(amount)}
                 onChange={handleAmountChange}
+                placeholder="0.00"
                 className="w-full pl-8 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-900 dark:text-white"
               />
             </div>

@@ -8,7 +8,7 @@ const LoansPage: React.FC = () => {
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'activos' | 'inactivos'>('activos');
+  const [activeTab, setActiveTab] = useState<'activos' | 'pagados' | 'anulados'>('activos');
   const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'cancel' | 'delete' | 'reactivate', loanId: number | null, title: string, message: string}>({
     isOpen: false,
     type: 'cancel',
@@ -92,9 +92,10 @@ const LoansPage: React.FC = () => {
 
   const filteredLoans = loans.filter(l => {
     const matchesSearch = l.clientName.toLowerCase().includes(search.toLowerCase());
-    const isActive = l.status !== 'Cancelled' && l.status !== 'Paid';
-    if (activeTab === 'activos') return matchesSearch && isActive;
-    return matchesSearch && !isActive;
+    if (activeTab === 'activos') return matchesSearch && (l.status === 'Active' || l.status === 'Overdue');
+    if (activeTab === 'pagados') return matchesSearch && l.status === 'Paid';
+    if (activeTab === 'anulados') return matchesSearch && l.status === 'Cancelled';
+    return matchesSearch;
   });
 
   return (
@@ -141,10 +142,16 @@ const LoansPage: React.FC = () => {
               Activos
             </button>
             <button 
-              onClick={() => setActiveTab('inactivos')}
-              className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inactivos' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+              onClick={() => setActiveTab('pagados')}
+              className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'pagados' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
-              Inactivos
+              Pagados
+            </button>
+            <button 
+              onClick={() => setActiveTab('anulados')}
+              className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'anulados' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              Anulados
             </button>
           </div>
           
@@ -166,8 +173,8 @@ const LoansPage: React.FC = () => {
               <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 text-[10px] uppercase font-black tracking-widest text-slate-400">
                 <th className="px-8 py-5">Cliente</th>
                 <th className="px-8 py-5">Préstamo</th>
-                <th className="px-8 py-5">Progreso</th>
-                <th className="px-8 py-5">Saldo</th>
+                <th className="px-8 py-5">Progreso de Pago</th>
+                <th className="px-8 py-5">Desglose (Pagado / Pendiente)</th>
                 <th className="px-8 py-5">Estado</th>
                 <th className="px-8 py-5 text-right"></th>
               </tr>
@@ -209,20 +216,40 @@ const LoansPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="w-32">
-                          <div className="flex justify-between mb-1">
-                            <span className="text-[9px] font-black text-slate-400">{Math.round(progress)}%</span>
+                        <div className="w-40">
+                          <div className="flex justify-between mb-1.5 items-end">
+                            <span className={`text-[10px] font-black ${loan.status === 'Overdue' ? 'text-red-500' : 'text-emerald-500'}`}>
+                              {progress > 0 && progress < 1 ? progress.toFixed(2) : Math.round(progress)}%
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Completado</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
                             <div 
-                              className={`h-full transition-all duration-1000 ${loan.status === 'Overdue' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                              className={`h-full transition-all duration-1000 relative ${loan.status === 'Overdue' ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-emerald-400 to-emerald-600'}`}
                               style={{ width: `${progress}%` }}
-                            />
+                            >
+                              <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <p className="text-sm font-black text-slate-900 dark:text-white">${loan.balanceDue.toLocaleString()}</p>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                              <span className="text-[10px] text-slate-400 font-medium mr-1">Pagado:</span>
+                              ${(loan.totalToPay - loan.balanceDue).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                            <p className="text-xs font-black text-slate-900 dark:text-white">
+                              <span className="text-[10px] text-slate-400 font-medium mr-1">Pendiente:</span>
+                              ${loan.balanceDue.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-8 py-6">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${

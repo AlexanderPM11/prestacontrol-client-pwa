@@ -8,8 +8,9 @@ const LoanDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const [loan, setLoan] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
+  const [audits, setAudits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'cuotas' | 'historial'>('cuotas');
+  const [activeTab, setActiveTab] = useState<'cuotas' | 'historial' | 'auditoria'>('cuotas');
 
   useEffect(() => {
     if (id) {
@@ -20,12 +21,14 @@ const LoanDetailsPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [loanRes, paymentsRes] = await Promise.all([
+      const [loanRes, paymentsRes, auditsRes] = await Promise.all([
         api.get(`/loans/${id}`),
-        api.get(`/loans/${id}/payments`)
+        api.get(`/loans/${id}/payments`),
+        api.get(`/loans/${id}/audits`)
       ]);
       setLoan(loanRes.data);
       setPayments(paymentsRes.data);
+      setAudits(auditsRes.data);
     } catch (err) {
       console.error('Error fetching loan details:', err);
       alert('Error cargando los detalles del préstamo.');
@@ -86,30 +89,51 @@ const LoanDetailsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 md:col-span-1">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Monto Principal</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">${loan.amount.toLocaleString()}</p>
+          <p className="text-[10px] font-bold text-slate-400 mt-1">Capital inicial</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 md:col-span-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tasa / Frecuencia</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white">{loan.interestRate}% <span className="text-sm text-slate-400 font-medium">/ {loan.frequency}</span></p>
+        
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total a Pagar</p>
+          <p className="text-2xl font-black text-blue-600 dark:text-blue-400">${loan.totalToPay.toLocaleString()}</p>
+          <p className="text-[10px] font-bold text-blue-400/60 mt-1">Incluye intereses ({loan.interestRate}%)</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800 md:col-span-2 relative overflow-hidden flex items-center justify-between">
-          <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Saldo Restante</p>
-            <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">${loan.balanceDue.toLocaleString()}</p>
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-xl border border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Pagado</p>
+          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">${(loan.totalToPay - loan.balanceDue).toLocaleString()}</p>
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div 
+              className="bg-emerald-500 h-full transition-all duration-1000" 
+              style={{ width: `${Math.min(100, progress)}%` }}
+            />
           </div>
-          <div className="text-right">
-             <span className={`px-4 py-2 rounded-full text-xs font-black uppercase border inline-block ${
-                loan.status === 'Cancelled' ? 'bg-slate-50 text-slate-500 border-slate-200' : 
-                loan.status === 'Paid' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
-                loan.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' : 
-                'bg-emerald-50 text-emerald-600 border-emerald-100'
+        </div>
+
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-950 p-6 rounded-[32px] shadow-2xl border border-slate-700 dark:border-slate-800 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Saldo Pendiente</p>
+          <p className="text-3xl font-black text-white">${loan.balanceDue.toLocaleString()}</p>
+          <div className="w-full bg-slate-700 h-1 rounded-full mt-2 overflow-hidden">
+            <div 
+              className="bg-emerald-500 h-full transition-all duration-1000" 
+              style={{ width: `${Math.max(0.5, progress)}%` }}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
+                loan.status === 'Cancelled' ? 'bg-slate-700 text-slate-400 border-slate-600' : 
+                loan.status === 'Paid' ? 'bg-emerald-900/40 text-emerald-400 border-emerald-500/30' : 
+                loan.status === 'Overdue' ? 'bg-red-900/40 text-red-400 border-red-500/30' : 
+                'bg-blue-900/40 text-blue-400 border-blue-500/30'
             }`}>
-              {loan.status === 'Cancelled' ? 'Anulado' : loan.status === 'Paid' ? 'Pagado' : loan.status === 'Overdue' ? 'En Mora' : 'Activo'}
+              {loan.status === 'Cancelled' ? 'Anulado' : loan.status === 'Paid' ? 'Completado' : loan.status === 'Overdue' ? 'En Mora' : 'Activo'}
             </span>
-            <p className="text-xs font-bold text-slate-400 mt-2">{Math.round(progress)}% Pagado</p>
+            <p className="text-[10px] font-black text-emerald-500">
+              {progress > 0 && progress < 1 ? progress.toFixed(2) : Math.round(progress)}% PAGADO
+            </p>
           </div>
         </div>
       </div>
@@ -128,6 +152,12 @@ const LoanDetailsPage: React.FC = () => {
             >
               <History size={18} /> Historial de Pagos
             </button>
+            <button 
+              onClick={() => setActiveTab('auditoria')}
+              className={`flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'auditoria' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              <Clock size={18} /> Historial de Cambios
+            </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -139,6 +169,7 @@ const LoanDetailsPage: React.FC = () => {
                   <th className="px-8 py-5">Fecha de Vencimiento</th>
                   <th className="px-8 py-5">Monto</th>
                   <th className="px-8 py-5">Pagado</th>
+                  <th className="px-8 py-5">Pendiente</th>
                   <th className="px-8 py-5">Estado</th>
                 </tr>
               </thead>
@@ -151,6 +182,7 @@ const LoanDetailsPage: React.FC = () => {
                     </td>
                     <td className="px-8 py-6 font-bold text-slate-900 dark:text-white">${inst.amount.toLocaleString()}</td>
                     <td className="px-8 py-6 text-emerald-600 font-bold">${inst.paidAmount.toLocaleString()}</td>
+                    <td className="px-8 py-6 text-amber-600 font-bold">${(inst.amount - inst.paidAmount).toLocaleString()}</td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
                         inst.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
@@ -165,7 +197,7 @@ const LoanDetailsPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          ) : (
+          ) : activeTab === 'historial' ? (
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 text-[10px] uppercase font-black tracking-widest text-slate-400">
@@ -206,6 +238,44 @@ const LoanDetailsPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+          ) : (
+            <div className="p-8">
+              {audits.length > 0 ? (
+                <div className="space-y-6">
+                  {audits.map((audit) => (
+                    <div key={audit.id} className="flex gap-4 items-start group">
+                      <div className="mt-1 flex flex-col items-center">
+                        <div className="w-3 h-3 rounded-full bg-blue-500 ring-4 ring-blue-500/20 group-hover:scale-125 transition-transform"></div>
+                        <div className="w-0.5 h-full min-h-[40px] bg-slate-100 dark:bg-slate-800"></div>
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                            {audit.action}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {new Date(audit.date).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                          <p className="text-sm text-slate-700 dark:text-slate-300 font-medium whitespace-pre-wrap leading-relaxed">
+                            {audit.changesDescription}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                    <Clock size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-500">Sin cambios registrados</h3>
+                  <p className="text-slate-400 text-sm mt-1">Este préstamo no ha tenido modificaciones aún.</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
