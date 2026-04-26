@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Search, Calendar, User, TrendingUp, Clock } from 'lucide-react';
-import axios from 'axios';
+import api from '../api/api';
 
 const DelinquentLoansPage: React.FC = () => {
   const [loans, setLoans] = useState<any[]>([]);
@@ -14,7 +14,7 @@ const DelinquentLoansPage: React.FC = () => {
 
   const fetchDelinquentLoans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/delinquency/loans`);
+      const response = await api.get(`/delinquency/loans`);
       setLoans(response.data);
     } catch (err) {
       console.error('Error fetching delinquent loans:', err);

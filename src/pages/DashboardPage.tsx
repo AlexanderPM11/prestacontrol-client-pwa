@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, DollarSign, LogOut, Menu, AlertTriangle, PlusCircle, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, CreditCard, DollarSign, Menu, AlertTriangle, PlusCircle, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import axios from 'axios';
+import api from '../api/api';
 
 const DashboardPage = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const DashboardPage = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/dashboard/stats`);
+      const response = await api.get(`/dashboard/stats`);
       setStats(response.data);
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);

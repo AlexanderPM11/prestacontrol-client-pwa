@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Landmark, Plus, Filter, Search, Calendar, ChevronRight, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/api';
 
 const LoansPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const LoansPage: React.FC = () => {
 
   const fetchLoans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/loans`);
+      const response = await api.get(`/loans`);
       setLoans(response.data);
     } catch (err) {
       console.error('Error fetching loans:', err);

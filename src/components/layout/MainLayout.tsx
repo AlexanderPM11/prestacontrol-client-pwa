@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, DollarSign, LogOut } from 'lucide-react';
+import { LayoutDashboard, CreditCard, DollarSign, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface MainLayoutProps {
@@ -14,7 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: 'Inicio', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Clientes', icon: Users, path: '/clients' },
+
     { label: 'Préstamos', icon: LoansPagePath(location.pathname), path: '/loans' },
     { label: 'Cobros', icon: DollarSign, path: '/payments' },
   ];

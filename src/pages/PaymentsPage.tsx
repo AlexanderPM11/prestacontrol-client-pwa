@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Search, ArrowRight, DollarSign, Calendar, Info, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../api/api';
 
 const PaymentsPage: React.FC = () => {
   const [loans, setLoans] = useState<any[]>([]);
@@ -19,7 +19,7 @@ const PaymentsPage: React.FC = () => {
 
   const fetchPendingLoans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/payments/pending`);
+      const response = await api.get(`/payments/pending`);
       setLoans(response.data);
     } catch (err) {
       console.error('Error fetching loans:', err);
@@ -33,7 +33,7 @@ const PaymentsPage: React.FC = () => {
     setSuccess(false);
 
     try {
-      const response = await axios.post(`${API_URL}/payments`, {
+      const response = await api.post(`/payments`, {
         loanId: selectedLoan.id,
         amount: amount,
         paymentMethod: 'Efectivo',

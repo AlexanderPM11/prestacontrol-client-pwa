@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import ClientsPage from './pages/ClientsPage';
+
 import LoansPage from './pages/LoansPage';
 import NewLoanPage from './pages/NewLoanPage';
 import PaymentsPage from './pages/PaymentsPage';
@@ -39,14 +39,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/clients" 
-        element={
-          <ProtectedRoute>
-            <ClientsPage />
-          </ProtectedRoute>
-        } 
-      />
+
       <Route 
         path="/loans" 
         element={
