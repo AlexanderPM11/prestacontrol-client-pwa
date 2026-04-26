@@ -29,16 +29,7 @@ const DelinquentLoansPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-2xl">
-              <AlertCircle size={32} />
-            </div>
-            Control de Morosidad
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Monitoreo de carteras vencidas y recargos</p>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-6 mb-10">
 
         <div className="flex gap-4">
           <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">

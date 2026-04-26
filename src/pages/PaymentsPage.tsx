@@ -58,13 +58,6 @@ const PaymentsPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Wallet className="text-emerald-600" /> Recaudación de Cobros
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">Registra abonos y cancelaciones de cuotas</p>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Loan List */}
         <div className="lg:col-span-7 space-y-4">

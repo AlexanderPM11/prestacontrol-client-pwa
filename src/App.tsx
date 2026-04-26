@@ -9,9 +9,15 @@ import PaymentsPage from './pages/PaymentsPage';
 import DelinquentLoansPage from './pages/DelinquentLoansPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
+import MainLayout from './components/layout/MainLayout';
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  return isAuthenticated ? (
+    <MainLayout>{children}</MainLayout>
+  ) : (
+    <Navigate to="/login" />
+  );
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
