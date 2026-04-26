@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, ShieldCheck, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -89,6 +89,12 @@ const LoginPage = () => {
             {loading ? <Loader2 className="animate-spin" size={20} /> : <LogIn size={20} />}
             {loading ? 'Cargando...' : 'Entrar al Sistema'}
           </button>
+
+          <div className="text-center mt-6">
+            <Link to="/forgot-password" className="text-sm text-slate-500 hover:text-primary-600 font-medium transition-colors">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </form>
 
         <p className="mt-8 text-center text-slate-400 text-xs">

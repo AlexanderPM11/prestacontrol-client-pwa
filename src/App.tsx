@@ -2,21 +2,74 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ClientsPage from './pages/ClientsPage';
+import LoansPage from './pages/LoansPage';
+import NewLoanPage from './pages/NewLoanPage';
+import PaymentsPage from './pages/PaymentsPage';
+import DelinquentLoansPage from './pages/DelinquentLoansPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/dashboard" /> : <>{children}</>;
+};
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+      
       <Route 
         path="/dashboard" 
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/clients" 
+        element={
+          <ProtectedRoute>
+            <ClientsPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/loans" 
+        element={
+          <ProtectedRoute>
+            <LoansPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/loans/new" 
+        element={
+          <ProtectedRoute>
+            <NewLoanPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/payments" 
+        element={
+          <ProtectedRoute>
+            <PaymentsPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/loans/delinquent" 
+        element={
+          <ProtectedRoute>
+            <DelinquentLoansPage />
           </ProtectedRoute>
         } 
       />
