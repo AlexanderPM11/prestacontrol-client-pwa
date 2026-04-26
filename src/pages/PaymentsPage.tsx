@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Search, ArrowRight, DollarSign, Calendar, Info, CheckCircle2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/api';
 
 const PaymentsPage: React.FC = () => {
@@ -13,6 +14,8 @@ const PaymentsPage: React.FC = () => {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
+  const location = useLocation();
+
   useEffect(() => {
     fetchPendingLoans();
   }, []);
@@ -21,6 +24,15 @@ const PaymentsPage: React.FC = () => {
     try {
       const response = await api.get(`/payments/pending`);
       setLoans(response.data);
+      
+      const searchParams = new URLSearchParams(location.search);
+      const initialLoanId = searchParams.get('loanId');
+      if (initialLoanId) {
+        const found = response.data.find((l: any) => l.id === Number(initialLoanId));
+        if (found) {
+          setSelectedLoan(found);
+        }
+      }
     } catch (err) {
       console.error('Error fetching loans:', err);
     }

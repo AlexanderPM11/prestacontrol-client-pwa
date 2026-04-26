@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from 'react';
 
 interface LoanSimulatorProps {
+  initialData?: {
+    amount: number;
+    interestRate: number;
+    installmentsCount: number;
+    frequency: string;
+    startDate: string;
+  };
   onSimulationChange?: (data: any) => void;
 }
 
-const LoanSimulator: React.FC<LoanSimulatorProps> = ({ onSimulationChange }) => {
-  const [amount, setAmount] = useState<number | ''>('');
-  const [interestRate, setInterestRate] = useState<number | ''>('');
-  const [installments, setInstallments] = useState<number | ''>('');
-  const [frequency, setFrequency] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
+const LoanSimulator: React.FC<LoanSimulatorProps> = ({ initialData, onSimulationChange }) => {
+  const [amount, setAmount] = useState<number | ''>(initialData?.amount || '');
+  const [interestRate, setInterestRate] = useState<number | ''>(initialData?.interestRate || '');
+  const [installments, setInstallments] = useState<number | ''>(initialData?.installmentsCount || '');
+  const [frequency, setFrequency] = useState<string>(initialData?.frequency || '');
+  const [startDate, setStartDate] = useState<string>(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '');
 
   const [simulation, setSimulation] = useState<any[]>([]);
   const [totalToPay, setTotalToPay] = useState<number>(0);
+
+  useEffect(() => {
+    if (initialData) {
+      setAmount(initialData.amount);
+      setInterestRate(initialData.interestRate);
+      setInstallments(initialData.installmentsCount);
+      setFrequency(initialData.frequency);
+      setStartDate(new Date(initialData.startDate).toISOString().split('T')[0]);
+    }
+  }, [initialData]);
 
   useEffect(() => {
     calculateSimulation();

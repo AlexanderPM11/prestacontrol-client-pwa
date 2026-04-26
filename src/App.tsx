@@ -5,6 +5,8 @@ import DashboardPage from './pages/DashboardPage';
 
 import LoansPage from './pages/LoansPage';
 import NewLoanPage from './pages/NewLoanPage';
+import LoanDetailsPage from './pages/LoanDetailsPage';
+import EditLoanPage from './pages/EditLoanPage';
 import PaymentsPage from './pages/PaymentsPage';
 import DelinquentLoansPage from './pages/DelinquentLoansPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -53,6 +55,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <NewLoanPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/loans/details/:id" 
+        element={
+          <ProtectedRoute>
+            <LoanDetailsPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/loans/edit/:id" 
+        element={
+          <ProtectedRoute>
+            <EditLoanPage />
           </ProtectedRoute>
         } 
       />

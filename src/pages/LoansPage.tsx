@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Landmark, Plus, Filter, Search, Calendar, ChevronRight, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Landmark, Plus, Filter, Search, Calendar, ChevronRight, TrendingUp, AlertCircle, CheckCircle2, Trash2, XCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 
@@ -8,6 +8,14 @@ const LoansPage: React.FC = () => {
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'activos' | 'inactivos'>('activos');
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'cancel' | 'delete' | 'reactivate', loanId: number | null, title: string, message: string}>({
+    isOpen: false,
+    type: 'cancel',
+    loanId: null,
+    title: '',
+    message: ''
+  });
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -26,15 +34,68 @@ const LoansPage: React.FC = () => {
     }
   };
 
+  const handleCancelLoan = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setModalConfig({
+      isOpen: true,
+      type: 'cancel',
+      loanId: id,
+      title: 'Anular Préstamo',
+      message: '¿Estás seguro de que deseas ANULAR este préstamo? No podrá recibir pagos y se marcará como inactivo.'
+    });
+  };
+
+  const handleDeleteLoan = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setModalConfig({
+      isOpen: true,
+      type: 'delete',
+      loanId: id,
+      title: 'Eliminar Préstamo',
+      message: '¿Estás totalmente seguro de que deseas ELIMINAR este préstamo de la base de datos? Esta acción es irreversible.'
+    });
+  };
+
+  const handleReactivateLoan = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setModalConfig({
+      isOpen: true,
+      type: 'reactivate',
+      loanId: id,
+      title: 'Reactivar Préstamo',
+      message: '¿Deseas REACTIVAR este préstamo? Volverá a la lista de activos y podrá recibir pagos nuevamente.'
+    });
+  };
+
+  const confirmAction = async () => {
+    if (!modalConfig.loanId) return;
+    try {
+      if (modalConfig.type === 'cancel') {
+        await api.put(`/loans/${modalConfig.loanId}/cancel`);
+      } else if (modalConfig.type === 'reactivate') {
+        await api.put(`/loans/${modalConfig.loanId}/reactivate`);
+      } else {
+        await api.delete(`/loans/${modalConfig.loanId}`);
+      }
+      setModalConfig({ ...modalConfig, isOpen: false });
+      fetchLoans();
+    } catch (err) {
+      alert('Error al procesar la solicitud.');
+    }
+  };
+
   const stats = [
     { label: 'Total en Calle', value: loans.reduce((acc, l) => acc + l.balanceDue, 0), icon: Landmark, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Intereses', value: loans.reduce((acc, l) => acc + (l.totalToPay - l.amount), 0), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'En Mora', value: loans.filter(l => l.status === 'Overdue').length, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
   ];
 
-  const filteredLoans = loans.filter(l => 
-    l.clientName.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredLoans = loans.filter(l => {
+    const matchesSearch = l.clientName.toLowerCase().includes(search.toLowerCase());
+    const isActive = l.status !== 'Cancelled' && l.status !== 'Paid';
+    if (activeTab === 'activos') return matchesSearch && isActive;
+    return matchesSearch && !isActive;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto pb-24">
@@ -71,15 +132,30 @@ const LoansPage: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <div className="p-6 border-b border-slate-50 dark:border-slate-800">
-          <div className="relative">
+        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-full md:w-auto">
+            <button 
+              onClick={() => setActiveTab('activos')}
+              className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'activos' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              Activos
+            </button>
+            <button 
+              onClick={() => setActiveTab('inactivos')}
+              className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'inactivos' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              Inactivos
+            </button>
+          </div>
+          
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar por cliente..." 
+              placeholder="Buscar..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-200 outline-none"
+              className="w-full pl-12 pr-6 py-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-200 outline-none"
             />
           </div>
         </div>
@@ -108,7 +184,11 @@ const LoansPage: React.FC = () => {
                 filteredLoans.map((loan) => {
                   const progress = ((loan.totalToPay - loan.balanceDue) / loan.totalToPay) * 100;
                   return (
-                    <tr key={loan.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer">
+                    <tr 
+                      key={loan.id} 
+                      onClick={() => navigate(`/loans/details/${loan.id}`)}
+                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer"
+                    >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
@@ -146,17 +226,48 @@ const LoansPage: React.FC = () => {
                       </td>
                       <td className="px-8 py-6">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
-                          loan.status === 'Overdue' 
+                          loan.status === 'Cancelled' 
+                            ? 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400' 
+                            : loan.status === 'Paid'
+                            ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400'
+                            : loan.status === 'Overdue' 
                             ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' 
                             : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
                         }`}>
-                          {loan.status === 'Overdue' ? 'En Mora' : 'Al Día'}
+                          {loan.status === 'Cancelled' ? 'Anulado' : loan.status === 'Paid' ? 'Pagado' : loan.status === 'Overdue' ? 'En Mora' : 'Activo'}
                         </span>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors">
-                          <ChevronRight size={20} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {loan.status !== 'Cancelled' && loan.status !== 'Paid' && (
+                            <button 
+                              onClick={(e) => handleCancelLoan(e, loan.id)}
+                              className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-xl transition-all tooltip"
+                              title="Anular Préstamo"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          )}
+                          {loan.status === 'Cancelled' && (
+                            <button 
+                              onClick={(e) => handleReactivateLoan(e, loan.id)}
+                              className="p-2 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-xl transition-all tooltip"
+                              title="Reactivar Préstamo"
+                            >
+                              <RefreshCw size={18} />
+                            </button>
+                          )}
+                          <button 
+                            onClick={(e) => handleDeleteLoan(e, loan.id)}
+                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all tooltip"
+                            title="Eliminar Préstamo"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                          <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors ml-2">
+                            <ChevronRight size={20} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -176,6 +287,47 @@ const LoansPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Custom Confirm Modal */}
+      {modalConfig.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-fade-in-up border border-slate-100 dark:border-slate-700">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+              modalConfig.type === 'cancel' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500' : 
+              modalConfig.type === 'reactivate' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-500' :
+              'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-500'
+            }`}>
+              {modalConfig.type === 'cancel' ? <AlertCircle size={32} /> : 
+               modalConfig.type === 'reactivate' ? <RefreshCw size={32} /> : 
+               <Trash2 size={32} />}
+            </div>
+            <h3 className="text-2xl font-black text-center text-slate-900 dark:text-white mb-2">
+              {modalConfig.title}
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-8 leading-relaxed">
+              {modalConfig.message}
+            </p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmAction}
+                className={`flex-1 px-4 py-3 rounded-xl font-bold text-white transition-all shadow-lg ${
+                  modalConfig.type === 'cancel' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30' : 
+                  modalConfig.type === 'reactivate' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30' :
+                  'bg-red-600 hover:bg-red-700 shadow-red-500/30'
+                }`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
