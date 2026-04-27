@@ -10,7 +10,7 @@ const LoanDetailsPage: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [audits, setAudits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'cuotas' | 'historial' | 'auditoria'>('cuotas');
+  const [activeTab, setActiveTab] = useState<'cuotas' | 'historial' | 'auditoria'>('historial');
 
   useEffect(() => {
     if (id) {
@@ -140,12 +140,6 @@ const LoanDetailsPage: React.FC = () => {
 
       <div className="bg-white dark:bg-slate-900 rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
         <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex bg-slate-50 dark:bg-slate-800/50 m-6 rounded-2xl p-1">
-           <button 
-              onClick={() => setActiveTab('cuotas')}
-              className={`flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'cuotas' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-            >
-              <List size={18} /> Cuotas Programadas
-            </button>
             <button 
               onClick={() => setActiveTab('historial')}
               className={`flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'historial' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
@@ -158,46 +152,16 @@ const LoanDetailsPage: React.FC = () => {
             >
               <Clock size={18} /> Historial de Cambios
             </button>
+            <button 
+              onClick={() => setActiveTab('cuotas')}
+              className={`flex-1 flex justify-center items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'cuotas' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              <List size={18} /> Cuotas Programadas
+            </button>
         </div>
 
         <div className="overflow-x-auto">
-          {activeTab === 'cuotas' ? (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 text-[10px] uppercase font-black tracking-widest text-slate-400">
-                  <th className="px-8 py-5">Cuota #</th>
-                  <th className="px-8 py-5">Fecha de Vencimiento</th>
-                  <th className="px-8 py-5">Monto</th>
-                  <th className="px-8 py-5">Pagado</th>
-                  <th className="px-8 py-5">Pendiente</th>
-                  <th className="px-8 py-5">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                {loan.installments.map((inst: any) => (
-                  <tr key={inst.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
-                    <td className="px-8 py-6 font-bold text-slate-900 dark:text-white">{inst.installmentNumber}</td>
-                    <td className="px-8 py-6 text-slate-600 dark:text-slate-300">
-                      {new Date(inst.dueDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-8 py-6 font-bold text-slate-900 dark:text-white">${inst.amount.toLocaleString()}</td>
-                    <td className="px-8 py-6 text-emerald-600 font-bold">${inst.paidAmount.toLocaleString()}</td>
-                    <td className="px-8 py-6 text-amber-600 font-bold">${(inst.amount - inst.paidAmount).toLocaleString()}</td>
-                    <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
-                        inst.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                        inst.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' :
-                        inst.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                        'bg-slate-50 text-slate-500 border-slate-200'
-                      }`}>
-                        {inst.status === 'Paid' ? 'Pagada' : inst.status === 'Overdue' ? 'Vencida' : inst.status === 'Partial' ? 'Parcial' : 'Pendiente'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : activeTab === 'historial' ? (
+          {activeTab === 'historial' ? (
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 text-[10px] uppercase font-black tracking-widest text-slate-400">
@@ -238,7 +202,7 @@ const LoanDetailsPage: React.FC = () => {
                 )}
               </tbody>
             </table>
-          ) : (
+          ) : activeTab === 'auditoria' ? (
             <div className="p-8">
               {audits.length > 0 ? (
                 <div className="space-y-6">
@@ -276,6 +240,42 @@ const LoanDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700 text-[10px] uppercase font-black tracking-widest text-slate-400">
+                  <th className="px-8 py-5">Cuota #</th>
+                  <th className="px-8 py-5">Fecha de Vencimiento</th>
+                  <th className="px-8 py-5">Monto</th>
+                  <th className="px-8 py-5">Pagado</th>
+                  <th className="px-8 py-5">Pendiente</th>
+                  <th className="px-8 py-5">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {loan.installments.map((inst: any) => (
+                  <tr key={inst.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                    <td className="px-8 py-6 font-bold text-slate-900 dark:text-white">{inst.installmentNumber}</td>
+                    <td className="px-8 py-6 text-slate-600 dark:text-slate-300">
+                      {new Date(inst.dueDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-8 py-6 font-bold text-slate-900 dark:text-white">${inst.amount.toLocaleString()}</td>
+                    <td className="px-8 py-6 text-emerald-600 font-bold">${inst.paidAmount.toLocaleString()}</td>
+                    <td className="px-8 py-6 text-amber-600 font-bold">${(inst.amount - inst.paidAmount).toLocaleString()}</td>
+                    <td className="px-8 py-6">
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${
+                        inst.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        inst.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' :
+                        inst.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                        'bg-slate-50 text-slate-500 border-slate-200'
+                      }`}>
+                        {inst.status === 'Paid' ? 'Pagada' : inst.status === 'Overdue' ? 'Vencida' : inst.status === 'Partial' ? 'Parcial' : 'Pendiente'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
